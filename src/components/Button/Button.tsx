@@ -1,14 +1,20 @@
+import './Button.css'
 import React from 'react'
 
-
-type Props = {
-text: string;
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>{
+  variant? : 'primary' | 'secondary';
 }
-const Button: React.FC<Props> = ({text}) => {
+
+
+const Button: React.FC<ButtonProps> = ({variant, ...props}) => {  
+  const colorClasses = () => {
+    if (variant === 'primary') return {borderColor: '#6355F1', backgroundColor: '#6366F1', color:'#FAFAFA'};
+    if (variant === 'secondary') return {borderColor: '#6355F1', backgroundColor:'#FAFAFA' , color:'#6366F1'};
+    return {};
+  }
+  
   return (
-    <div>
-      {text}
-    </div>
+  <button style={{...colorClasses(),...props.style }} {...props}> {props.children} </button>
   )
 }
 
