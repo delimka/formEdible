@@ -1,21 +1,23 @@
-import './Button.css'
-import React from 'react'
+import './Button.css';
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>{
-  variant? : 'primary' | 'secondary';
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary';
 }
 
+const Button: React.FC<ButtonProps> = ({ variant, ...props }) => {
+  const styles = () => {
+    const propStyle = props.style ?? {};
+    if (props.disabled) return propStyle;
+    if (variant === 'primary') return { borderColor: '#6366F1', backgroundColor: '#6366F1', color: '#FAFAFA', ...propStyle };
+    if (variant === 'secondary') return { borderColor: '#6366F1', backgroundColor: '#FAFAFA', color: '#6366F1', ...propStyle };
+    return propStyle;
+  };
 
-const Button: React.FC<ButtonProps> = ({variant, ...props}) => {  
-  const colorClasses = () => {
-    if (variant === 'primary') return {borderColor: '#6355F1', backgroundColor: '#6366F1', color:'#FAFAFA'};
-    if (variant === 'secondary') return {borderColor: '#6355F1', backgroundColor:'#FAFAFA' , color:'#6366F1'};
-    return {};
-  }
-  
   return (
-  <button style={{...colorClasses(),...props.style }} {...props}> {props.children} </button>
-  )
-}
+    <button {...props} style={styles()}>
+      {props.children}
+    </button>
+  );
+};
 
 export default Button;
