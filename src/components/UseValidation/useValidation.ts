@@ -1,11 +1,10 @@
 // useValidation.ts
-import { useReducer, useEffect, useCallback } from "react";
+import { useReducer, useEffect} from "react";
 import {
   FieldConfig,
   FormState,
   Action,
   NamedFieldConfig,
-  ValidationCallbacks,
 } from "../../types/types/types";
 
 function validateField(
@@ -94,7 +93,6 @@ function checkConditionalAndCustomValidations(
   config: FieldConfig,
   allValues: Record<string, string>
 ): string | null {
-  // Преобразование conditionValue в строку, если это возможно и значение существует
   let conditionValueAsString: string | undefined;
   if (typeof config.conditionValue === "string") {
     conditionValueAsString = config.conditionValue;
@@ -102,7 +100,6 @@ function checkConditionalAndCustomValidations(
 
   switch (config.condition) {
     case "greaterThan":
-      // Убедитесь, что conditionValueAsString определено перед использованием
       if (
         conditionValueAsString &&
         parseFloat(value) <= parseFloat(allValues[conditionValueAsString] || "")
@@ -114,7 +111,6 @@ function checkConditionalAndCustomValidations(
       }
       break;
     case "lessThan":
-      // Добавление защиты от undefined для allValues[conditionValueAsString]
       if (
         conditionValueAsString &&
         parseFloat(value) >= parseFloat(allValues[conditionValueAsString] || "")
@@ -151,7 +147,6 @@ function checkConditionalAndCustomValidations(
 }
 
 function validateFields(
-
   values: Record<string, string>,
   configs: Record<string, FieldConfig>
 ): Record<string, string | null> {
@@ -235,19 +230,13 @@ function formReducer(state: FormState, action: Action): FormState {
   }
 }
 
-export const useValidation = (
-  configs: { [key: string]: FieldConfig },
-  callbacks: ValidationCallbacks
-) => {
-  console.log("dasdsa");
-  const { onValidateStart, onValidateSuccess, onValidateError } = callbacks;
-
+export const useValidation = (configs: { [key: string]: FieldConfig }) => {
   const initialState: FormState = {
     values: Object.keys(configs).reduce((acc, key) => {
       const config = configs[key];
       if (!config) {
         console.warn(`No configuration for key: ${key}`);
-        return acc; 
+        return acc;
       }
       const initialValue = config.initialValue ?? "";
       return { ...acc, [key]: initialValue };
@@ -256,24 +245,14 @@ export const useValidation = (
     blurred: {},
     submitted: false,
   };
-
   const [state, dispatch] = useReducer(formReducer, initialState);
 
   useEffect(() => {
     if (state.submitted) {
-      onValidateStart?.();
-
       const errors = validateFields(state.values, configs);
       dispatch({ type: "VALIDATE", payload: errors });
-
-      const hasErrors = Object.values(errors).some((error) => error !== null);
-      if (hasErrors) {
-        onValidateError?.(errors);
-      } else {
-        onValidateSuccess?.();
-      }
     }
-  }, [state.values, configs, state.submitted, callbacks]);
+  }, [state.values, configs, state.submitted]);
 
   async function validateSingleField(field: string) {
     const config = configs[field];
@@ -286,7 +265,6 @@ export const useValidation = (
 
     let error = validateField(value, config, state.values);
 
-    // Если нет ошибки и есть асинхронная валидация, проводим её
     if (!error && config.asyncValidate) {
       error = await config.asyncValidate(value, state.values);
     }
@@ -315,28 +293,12 @@ export const useValidation = (
     dispatch({ type: "REMOVE_FIELD", payload: { fieldName } });
   }
 
-  const validateAllFields = useCallback(() => {
-    onValidateStart?.();
-
+  const validateAllFields = () => {
     const errors = validateFields(state.values, configs);
+    console.log(errors);
     dispatch({ type: "VALIDATE", payload: errors });
-
-    const hasErrors = Object.values(errors).some((error) => error !== null);
-
-    if (hasErrors) {
-      onValidateError?.(errors);
-    } else {
-      onValidateSuccess?.();
-    }
-
     return errors;
-  }, [
-    configs,
-    onValidateStart,
-    onValidateSuccess,
-    onValidateError,
-    state.values,
-  ]);
+  };
 
   return {
     state,
