@@ -1,4 +1,3 @@
-Вот примерный шаблон README.md для вашей библиотеки `@delimka/formedible`, который вы можете доработать под свои нужды:
 
 ```markdown
 # @delimka/formedible
@@ -91,7 +90,8 @@ export default MyForm;
 
 For a full list of configuration options and API methods, please refer to the [API Documentation](#).
 
-## Contributing
+## Live preview of usage Zod and React-hook-form in comparison with FormEdible
+Live preview: https://formedible-react-hook-form-zod.web.app/
 
 Contributions are always welcome! Please see our contributing guidelines for more details.
 
