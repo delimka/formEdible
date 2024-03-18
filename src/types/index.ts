@@ -1,1 +1,1 @@
-export {FieldValues, FieldConfig, FormState, FieldErrors,ValidationCallbacks, NamedFieldConfig} from './types/types';
+export {FieldValues, FieldConfig, FormState, FieldErrors, NamedFieldConfig, UseValidationParams, FieldGroupConfig, ErrorType, Action   } from './types/types';

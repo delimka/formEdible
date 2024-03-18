@@ -1,6 +1,6 @@
 {
   "name": "@delimka/formedible",
-  "version": "1.1.4",
+  "version": "1.1.7",
   "description": "Library for form creation and validation",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -9,7 +9,7 @@
     "dist"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/delimka"
+    "registry": "https://registry.npmjs.org/"
   },
   "plugins": [
     "@babel/plugin-syntax-jsx"
