@@ -1,7 +1,7 @@
 {
   "name": "@delimka/formedible",
-  "version": "1.1.4",
-  "description": "Library for form creation and validation",
+  "version": "1.1.12",
+  "description": "Library for form state management and validation",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
     "dist"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/delimka"
+    "registry": "https://registry.npmjs.org/"
   },
   "plugins": [
     "@babel/plugin-syntax-jsx"
@@ -81,8 +81,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.31",
     "postcss-import": "^15.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "rollup": "^3.29.4",
     "rollup-plugin-dts": "^6.0.2",
     "rollup-plugin-postcss": "^4.0.2",
@@ -91,6 +91,7 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
-    "react": "^18.2.0"
-    }
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
 }

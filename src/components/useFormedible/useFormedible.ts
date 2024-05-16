@@ -1,21 +1,28 @@
-// useValidation.ts
 import { useReducer, useEffect, useCallback } from "react";
 import {
   FieldConfig,
   FormState,
   Action,
   NamedFieldConfig,
-  ValidationCallbacks,
+  UseValidationParams,
+  FieldGroupConfig,
 } from "../../types/types/types";
 
 function validateField(
   value: string,
   config: FieldConfig,
-  allValues: Record<string, string>
+  allValues: Record<string, string | boolean>
 ): string | null {
-  if (!config) return null;
+  if (!config) {
+    console.error("Config is undefined for the field.");
+    return "Configuration error";
+  }
+
   if (config.isRequired && !value) {
     return config.messages?.isRequired || "This field is required";
+  }
+  if (config.isLogicValid && !config.isLogicValid(allValues)) {
+    return config.messages?.isLogicValid || "Logic validation failed";
   }
 
   if (config.isMinLength && value.length < config.isMinLength) {
@@ -44,11 +51,14 @@ function validateField(
     );
   }
 
-  if (config.isEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  if (
+    config.isEmail &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value as string)
+  ) {
     return config.messages?.isEmail || "Invalid email format";
   }
 
-  if (config.isPhone && !/^\+\d{1,3}[0-9]{5,12}$/.test(value)) {
+  if (config.isPhone && !/^\+\d{1,3}[0-9]{5,12}$/.test(value as string)) {
     return (
       config.messages?.isPhone ||
       "Invalid phone number format, expected +(xxx) xxxxxx "
@@ -89,39 +99,43 @@ function validateField(
 
   return errorMessage;
 }
+
 function checkConditionalAndCustomValidations(
   value: string,
   config: FieldConfig,
-  allValues: Record<string, string>
-): string | null {
-  // Преобразование conditionValue в строку, если это возможно и значение существует
-  let conditionValueAsString: string | undefined;
-  if (typeof config.conditionValue === "string") {
-    conditionValueAsString = config.conditionValue;
-  }
+  allValues: Record<string, string | boolean>
+) {
+  const conditionValue = allValues[config.conditionValue as string];
 
   switch (config.condition) {
     case "greaterThan":
-      // Убедитесь, что conditionValueAsString определено перед использованием
-      if (
-        conditionValueAsString &&
-        parseFloat(value) <= parseFloat(allValues[conditionValueAsString] || "")
-      ) {
+      if (typeof conditionValue !== "string") {
+        return `Invalid comparison between string and non-string value for ${config.conditionValue}`;
+      }
+      if (!(parseFloat(value) > parseFloat(conditionValue))) {
         return (
           config.conditionMessage ||
-          `Value must be greater than ${conditionValueAsString}`
+          `Value must be greater than ${config.conditionValue}`
         );
       }
       break;
+    case "between": {
+      const [min, max] = config.conditionValue as [number, number];
+      if (!(parseFloat(value) >= min && parseFloat(value) <= max)) {
+        return (
+          config.conditionMessage || `Value must be between ${min} and ${max}`
+        );
+      }
+      break;
+    }
     case "lessThan":
-      // Добавление защиты от undefined для allValues[conditionValueAsString]
-      if (
-        conditionValueAsString &&
-        parseFloat(value) >= parseFloat(allValues[conditionValueAsString] || "")
-      ) {
+      if (typeof conditionValue !== "string") {
+        return `Invalid comparison between string and non-string value for ${config.conditionValue}`;
+      }
+      if (!(parseFloat(value) < parseFloat(conditionValue))) {
         return (
           config.conditionMessage ||
-          `Value must be less than ${conditionValueAsString}`
+          `Value must be less than ${config.conditionValue}`
         );
       }
       break;
@@ -131,7 +145,7 @@ function checkConditionalAndCustomValidations(
         !config.conditionValue.test(value)
       ) {
         return (
-          config.conditionMessage || "Value does not match required pattern"
+          config.conditionMessage || `Value does not match required pattern`
         );
       }
       break;
@@ -140,23 +154,29 @@ function checkConditionalAndCustomValidations(
         typeof config.conditionValue === "function" &&
         !config.conditionValue(value, allValues)
       ) {
-        return config.conditionMessage || "Custom validation failed";
+        return config.conditionMessage || `Custom validation failed`;
       }
       break;
-    default:
-      return null;
   }
+}
 
-  return null;
+function validateGroup(
+  groupConfig: FieldGroupConfig | undefined,
+  allValues: Record<string, any>
+): string | null {
+  if (!groupConfig) {
+    return null;
+  }
+  return groupConfig.validate(allValues);
 }
 
 function validateFields(
-
   values: Record<string, string>,
-  configs: Record<string, FieldConfig>
+  configs: Record<string, FieldConfig>,
+  groups?: Record<string, FieldGroupConfig>
 ): Record<string, string | null> {
   const errors: Record<string, string | null> = {};
-  console.log("dasdsa");
+
   Object.keys(values).forEach((field) => {
     console.log(`Validating: ${field}`);
     const value = values[field] ?? "";
@@ -168,6 +188,17 @@ function validateFields(
     }
     const error = validateField(value, config, values);
     errors[field] = error;
+  });
+
+  Object.keys(groups || {}).forEach((groupName) => {
+    groups = groups || {};
+    const groupConfig = groups[groupName];
+    const groupError = validateGroup(groupConfig, values);
+    if (groupError) {
+      groupConfig?.fields.forEach((fieldName) => {
+        errors[fieldName] = errors[fieldName] || groupError;
+      });
+    }
   });
 
   return errors;
@@ -234,31 +265,51 @@ function formReducer(state: FormState, action: Action): FormState {
       throw new Error("Unknown action type");
   }
 }
-
-export const useValidation = (
-  configs: { [key: string]: FieldConfig },
-  callbacks: ValidationCallbacks
-) => {
-  console.log("dasdsa");
-  const { onValidateStart, onValidateSuccess, onValidateError } = callbacks;
+export const useFormedible = ({
+  configs,
+  callbacks = {},
+}: UseValidationParams) => {
+  const {
+    onValidateStart = () => {},
+    onValidateSuccess = () => {},
+    onValidateError = () => {},
+    onFieldValidate = () => {},
+  } = callbacks;
 
   const initialState: FormState = {
-    values: Object.keys(configs).reduce((acc, key) => {
-      const config = configs[key];
-      if (!config) {
-        console.warn(`No configuration for key: ${key}`);
-        return acc; 
-      }
-      const initialValue = config.initialValue ?? "";
-      return { ...acc, [key]: initialValue };
-    }, {}),
+    values: Object.keys(configs).reduce(
+      (acc, key) => ({ ...acc, [key]: configs[key]?.initialValue || "" }),
+      {}
+    ),
     errors: {},
     blurred: {},
     submitted: false,
   };
 
   const [state, dispatch] = useReducer(formReducer, initialState);
+  const validateAllFields = useCallback(() => {
+    onValidateStart?.();
 
+    const errors = validateFields(state.values, configs);
+    dispatch({ type: "VALIDATE", payload: errors });
+
+    const hasErrors = Object.values(errors).some((error) => error !== null);
+
+    if (hasErrors) {
+      onValidateError?.(errors);
+    } else {
+      onValidateSuccess?.();
+    }
+
+    return errors;
+  }, [
+    configs,
+    onValidateStart,
+    onValidateSuccess,
+    onValidateError,
+    onFieldValidate,
+    state.values,
+  ]);
   useEffect(() => {
     if (state.submitted) {
       onValidateStart?.();
@@ -275,19 +326,55 @@ export const useValidation = (
     }
   }, [state.values, configs, state.submitted, callbacks]);
 
+  async function trigger(fields: string[] = []): Promise<boolean> {
+    const fieldsToValidate = fields.length ? fields : Object.keys(configs);
+    const currentErrors = { ...state.errors };
+    let validationErrors = false;
+
+    for (const field of fieldsToValidate) {
+      const config = configs[field];
+      const value = state.values[field] ?? "";
+
+      if (!config) {
+        console.error(`Config not found for field: ${field}`);
+        continue;
+      }
+
+      let error = await validateField(value.toString(), config, state.values);
+      if (!error && config?.asyncValidate) {
+        try {
+          error = await config.asyncValidate(value, state.values);
+        } catch (e) {
+          console.error(`Async validation error for ${field}:`, e);
+          error = "Async validation failed";
+        }
+      }
+
+      if (error) {
+        currentErrors[field] = error;
+        validationErrors = true;
+      } else {
+        delete currentErrors[field];
+      }
+    }
+
+    dispatch({ type: "VALIDATE", payload: currentErrors });
+    return !validationErrors;
+  }
+
   async function validateSingleField(field: string) {
+    onFieldValidate(field);
+
     const config = configs[field];
     if (!config) {
-      console.error(`No configuration for field: ${field}`);
+      console.error(`Config not found for field: ${field}`);
       return;
     }
 
     const value = state.values[field] ?? "";
-
     let error = validateField(value, config, state.values);
 
-    // Если нет ошибки и есть асинхронная валидация, проводим её
-    if (!error && config.asyncValidate) {
+    if (!error && config?.asyncValidate) {
       error = await config.asyncValidate(value, state.values);
     }
 
@@ -311,38 +398,16 @@ export const useValidation = (
   }
 
   function removeField(fieldName: string) {
-    delete configs[fieldName]; // Assuming configs is defined and mutable
+    delete configs[fieldName];
     dispatch({ type: "REMOVE_FIELD", payload: { fieldName } });
   }
-
-  const validateAllFields = useCallback(() => {
-    onValidateStart?.();
-
-    const errors = validateFields(state.values, configs);
-    dispatch({ type: "VALIDATE", payload: errors });
-
-    const hasErrors = Object.values(errors).some((error) => error !== null);
-
-    if (hasErrors) {
-      onValidateError?.(errors);
-    } else {
-      onValidateSuccess?.();
-    }
-
-    return errors;
-  }, [
-    configs,
-    onValidateStart,
-    onValidateSuccess,
-    onValidateError,
-    state.values,
-  ]);
 
   return {
     state,
     dispatch,
     validateSingleField,
     addField,
+    trigger,
     removeField,
     validateField,
     validateAllFields,
