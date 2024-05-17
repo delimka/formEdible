@@ -65,22 +65,6 @@ Every aspect of FormEdible is designed to be easily configurable. This includes 
 
 FormEdible supports a wide range of built-in validation types, making it easy to ensure data integrity in your forms. Below is a table describing some type of validation available:
 
-| Validation Type    | Description                                                                   | Example Configuration                          |
-|--------------------|-------------------------------------------------------------------------------|------------------------------------------------|
-| `isRequired`       | Ensures the field must not be empty.                                          | `{ isRequired: true }`                         |
-| `isMinLength`      | Specifies the minimum length for the field's value.                           | `{ isMinLength: 3 }`                           |
-| `isMaxLength`      | Specifies the maximum length for the field's value.                           | `{ isMaxLength: 20 }`                          |
-| `isEqualTo`        | Requires the field's value to match another specified field's value.          | `{ isEqualTo: 'confirmPassword' }`             |
-| `isNotEqual`       | Requires the field's value not to match another specified field's value.      | `{ isNotEqual: 'currentPassword' }`            |
-| `isEmail`          | Validates that the field's value conforms to a valid email format.            | `{ isEmail: true }`                            |
-| `isPhone`          | Validates that the field's value conforms to a valid phone number format.     | `{ isPhone: true }`                            |
-| `isDate`           | Validates that the field's value matches a valid date format (YYYY-MM-DD).    | `{ isDate: true }`                             |
-| `isUrl`            | Validates that the field's value is a valid URL.                              | `{ isUrl: true }`                              |
-| `customValidate`   | Allows for custom function validations for complex scenarios.                 | `{ customValidate: value => value.startsWith('A') }` |
-| `condition`        | Allows conditional validations based on other field values.                   | `{ condition: 'greaterThan', conditionValue: 'age' }` |
-
-These validation types provide the flexibility to handle nearly any data validation requirement your forms may need.
-
 #### 2. Simplified State Management with React Hooks
 
 FormEdible leverages React hooks to simplify state management in forms, eliminating the need for external state management libraries and reducing boilerplate. The table below illustrates how FormEdible streamlines form state management:
@@ -96,6 +80,10 @@ FormEdible leverages React hooks to simplify state management in forms, eliminat
 ## Installation
 
 Installing FormEdible is straightforward and can be done using npm or yarn, depending on your preference. Below are the instructions for both methods:
+
+### NB!
+Ensure you have at least version 18.3.0 of both React and React-DOM.
+
 
 ### Using npm:
 
