@@ -73,7 +73,7 @@ FormEdible leverages React hooks to simplify state management in forms, eliminat
 |---------------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | **Hooks-Based Architecture** | Uses React's `useReducer` and `useEffect` for local state management.        | - Reduces the complexity of managing form state.<br>- Integrates easily with existing React applications.                     |
 | **Single Source of Truth**  | Maintains form state centrally within the hook, accessible to all components. | - Simplifies debugging and testing.<br>- Ensures consistency across components.                                                |
-| **Immutable State Updates** | Utilizes functional updates to ensure state immutability.                     | - Prevents side effects and bugs related to state mutations.<br>- Enhances performance by avoiding unnecessary re-renders.     |
+| **Immutable State Updates** | Utilizes functional updates to ensure state immutability.                     | 
 | **Asynchronous Support**    | Supports asynchronous validation and field updates.                           | - Allows for real-time validation against server-side constraints.<br>- Facilitates dynamic form adjustments based on user input. |
 
 
